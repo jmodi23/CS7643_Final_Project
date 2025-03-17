@@ -1,0 +1,18 @@
+# Core libraries
+torch==2.5.1      # Make sure to install the correct CUDA variant separately if needed
+transformers==4.40.1
+sentence-transformers==2.7.0
+datasets==2.18.0
+
+# FAISS for nearest neighbor search (CPU version; for GPU version, you'll need faiss-gpu via pip/conda)
+faiss-cpu==1.7.4
+
+# Data handling and visualization
+pandas==2.2.2
+numpy==1.26.4
+matplotlib==3.8.4
+seaborn==0.13.2
+
+# Utility
+scikit-learn==1.4.1.post1
+tqdm==4.66.2
