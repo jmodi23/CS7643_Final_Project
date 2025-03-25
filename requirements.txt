@@ -5,7 +5,7 @@ sentence-transformers==2.7.0
 datasets==2.18.0
 
 # FAISS for nearest neighbor search (CPU version; for GPU version, you'll need faiss-gpu via pip/conda)
-faiss-cpu==1.7.4
+#faiss-cpu-windows
 
 # Data handling and visualization
 pandas==2.2.2
