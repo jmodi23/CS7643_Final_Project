@@ -3,6 +3,7 @@ import faiss
 import numpy as np
 from sklearn.metrics import accuracy_score, classification_report
 from data.newsgroups_data import NewsGroupsDataset
+np.random.seed(10)  # Set seed
 
 class EmbeddingModel:
     # Text embedding model using SentenceTransformers
@@ -49,32 +50,68 @@ def evaluate_model(embedding_model, faiss_index, test_texts, test_labels, label_
 
     return predictions
 
-def main(dataset_class, dataset_params, model_choice='sbert'):
-    holdout_classes = dataset_params.pop('holdout_classes', None)
-
+def main(dataset, model_choice='sbert'):
     # Main function to run the text classification pipeline
-    dataset = dataset_class(**dataset_params, holdout_classes=holdout_classes)
     (train_texts, train_labels), (val_texts, val_labels), (test_texts, test_labels) = dataset.get_splits()
     holdout_texts, holdout_labels = dataset.get_holdout_data()
     
-    print(f"Trained with classes: {', '.join([dataset.label_names[i] for i in np.unique(train_labels)])}")
-    if len(holdout_texts) > 0:
-        print(f"Holding out classes: {', '.join([dataset.label_names[i] for i in np.unique(holdout_labels)])}")
-    
-    model_name = 'all-MiniLM-L6-v2' if model_choice == 'sbert' else 'distilbert-base-nli-stsb-mean-tokens'
-    embedding_model = EmbeddingModel(model_name)
-    embeddings = embedding_model.encode_texts(train_texts)
-    faiss_index = FaissIndex(embeddings, train_labels)
-    
-    print(f"FAISS index created w/ dimension: {embeddings.shape[1]}")
-    evaluate_model(embedding_model, faiss_index, test_texts, test_labels, dataset.label_names, "Regular Test")
+    train_label_names = [dataset.label_names[i] for i in np.unique(train_labels)]
+    holdout_label_names = [dataset.label_names[i] for i in np.unique(holdout_labels)]
 
-    # TODO: Finish holdout evals code
+    print(f"Trained with classes: {', '.join(train_label_names)}")
+    if len(holdout_texts) > 0:
+        print(f"Holding out classes: {', '.join(holdout_label_names)}")
+    
+    # Choose SBERT or DistilBERT
+    model_name = ('all-MiniLM-L6-v2' if model_choice == 'sbert' 
+                  else 'distilbert-base-nli-stsb-mean-tokens')
+    embedding_model = EmbeddingModel(model_name)
+    train_embeddings = embedding_model.encode_texts(train_texts)
+    faiss_index = FaissIndex(train_embeddings, train_labels)
+    
+    print(f"FAISS index created w/ dimension: {train_embeddings.shape[1]}")
+    evaluate_model(embedding_model, faiss_index, test_texts, test_labels, train_label_names, "Regular Test")
+
+    # Holdout Tests
+    if len(holdout_texts) > 0:
+        print("Few-Shot Learning: Adding Holdout Classes to Index")
+        # Get some random samples for each class
+        samples_per_class = 5
+
+        # Create a mask for selected samples
+        mask = np.zeros(len(holdout_texts), dtype=bool)
+
+        # Randomly sample examples per class
+        for cls in np.unique(holdout_labels):
+            cls_indices = np.where(holdout_labels == cls)[0]
+            selected = np.random.choice(cls_indices, min(samples_per_class, len(cls_indices)), replace=False)
+            mask[selected] = True  # Mark selected indices
+        
+        # Split holdout data using the mask
+        holdout_examples_text = np.array(holdout_texts)[mask]
+        holdout_examples_labels = holdout_labels[mask]
+
+        holdout_test_texts = np.array(holdout_texts)[~mask]
+        holdout_test_labels = holdout_labels[~mask]
+
+        # Update index
+        holdout_embeddings = embedding_model.encode_texts(holdout_examples_text)
+        updated_index = FaissIndex(
+            np.vstack([train_embeddings, holdout_embeddings]),
+            np.hstack([train_labels, holdout_examples_labels])
+        )
+        
+        # Evaluate only on the holdout test set not used in updating the index
+        evaluate_model(embedding_model, updated_index, 
+                        np.hstack([train_texts, holdout_test_texts]), 
+                        np.hstack([train_labels, holdout_test_labels]), 
+                        dataset.label_names, "Holdout (Few-Shot)")
     
 if __name__ == "__main__":
     newsgroups_params = {
-        'categories': ['comp.graphics', 'rec.sport.baseball', 'sci.space', 'talk.politics.mideast']
+        'categories': ['comp.graphics', 'rec.sport.baseball', 'sci.space', 'talk.politics.mideast'],
+        'holdout_classes': ['talk.politics.mideast']
     }
-    
-    main(NewsGroupsDataset, newsgroups_params, model_choice='sbert')
-    main(NewsGroupsDataset, newsgroups_params, model_choice='distilbert')
+
+    main(NewsGroupsDataset(**newsgroups_params), model_choice='sbert')
+    main(NewsGroupsDataset(**newsgroups_params), model_choice='distilbert')

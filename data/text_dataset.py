@@ -14,7 +14,6 @@ class TextDataset:
             holdout_mask = np.isin(self.labels, self.holdout_class_indices)
             self.holdout_texts = np.array(self.texts)[holdout_mask]
             self.holdout_labels = self.labels[holdout_mask]
-            
             # Remove holdout classes from training data
             train_mask = ~holdout_mask
             train_texts = np.array(self.texts)[train_mask]
