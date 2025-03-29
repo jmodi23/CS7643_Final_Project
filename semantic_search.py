@@ -1,26 +1,11 @@
-from sentence_transformers import SentenceTransformer
-import faiss
 import numpy as np
-from sklearn.metrics import accuracy_score, classification_report
 from data.newsgroups_data import NewsGroupsDataset
+from embedding_model import EmbeddingModel
+from sklearn.metrics import accuracy_score, classification_report
+import faiss
+
 np.random.seed(10)  # Set seed
-
-class EmbeddingModel:
-    # Text embedding model using SentenceTransformers
-    # Encodes text documents into dense vector representations
-    def __init__(self, model_name):
-        self.model = SentenceTransformer(model_name) # Update model_name if you finetuned a model
     
-    def encode_texts(self, texts):
-        # Encode list of texts into normalized embeddings
-        embeddings = self.model.encode(texts, convert_to_numpy=True, show_progress_bar=True)
-        return embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
-    
-    def encode_query(self, text):
-        # Encode single query text into normalized embedding
-        embedding = self.model.encode([text], convert_to_numpy=True)
-        return embedding / np.linalg.norm(embedding)
-
 class FaissIndex:
     # FAISS index for similarity search and classification
     def __init__(self, embeddings, labels):
@@ -50,7 +35,7 @@ def evaluate_model(embedding_model, faiss_index, test_texts, test_labels, label_
 
     return predictions
 
-def main(dataset, model_choice='sbert'):
+def main(dataset, model_name):
     # Main function to run the text classification pipeline
     (train_texts, train_labels), (val_texts, val_labels), (test_texts, test_labels) = dataset.get_splits()
     (holdout_example_texts, holdout_example_labels), (holdout_test_texts, holdout_test_labels) = dataset.get_holdout_data()
@@ -61,10 +46,7 @@ def main(dataset, model_choice='sbert'):
     print(f"Trained with classes: {', '.join(train_label_names)}")
     if len(holdout_label_names) > 0:
         print(f"Holding out classes: {', '.join(holdout_label_names)}")
-    
-    # Choose SBERT or DistilBERT
-    model_name = ('all-MiniLM-L6-v2' if model_choice == 'sbert' 
-                  else 'distilbert-base-nli-stsb-mean-tokens')
+     
     embedding_model = EmbeddingModel(model_name)
     train_embeddings = embedding_model.encode_texts(train_texts)
     faiss_index = FaissIndex(train_embeddings, train_labels)
@@ -95,5 +77,8 @@ if __name__ == "__main__":
         'holdout_classes': ['talk.politics.mideast']
     }
 
-    main(NewsGroupsDataset(**newsgroups_params), model_choice='sbert')
-    main(NewsGroupsDataset(**newsgroups_params), model_choice='distilbert')
+    dataset = NewsGroupsDataset(**newsgroups_params)
+
+    # BASE MODELS
+    main(dataset, model_name='all-MiniLM-L6-v2')
+    main(dataset, model_name='distilbert-base-nli-stsb-mean-tokens')
