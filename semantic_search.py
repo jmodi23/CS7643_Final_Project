@@ -53,13 +53,13 @@ def evaluate_model(embedding_model, faiss_index, test_texts, test_labels, label_
 def main(dataset, model_choice='sbert'):
     # Main function to run the text classification pipeline
     (train_texts, train_labels), (val_texts, val_labels), (test_texts, test_labels) = dataset.get_splits()
-    holdout_texts, holdout_labels = dataset.get_holdout_data()
+    (holdout_example_texts, holdout_example_labels), (holdout_test_texts, holdout_test_labels) = dataset.get_holdout_data()
     
     train_label_names = [dataset.label_names[i] for i in np.unique(train_labels)]
-    holdout_label_names = [dataset.label_names[i] for i in np.unique(holdout_labels)]
+    holdout_label_names = [dataset.label_names[i] for i in np.unique(holdout_example_labels)]
 
     print(f"Trained with classes: {', '.join(train_label_names)}")
-    if len(holdout_texts) > 0:
+    if len(holdout_label_names) > 0:
         print(f"Holding out classes: {', '.join(holdout_label_names)}")
     
     # Choose SBERT or DistilBERT
@@ -73,38 +73,20 @@ def main(dataset, model_choice='sbert'):
     evaluate_model(embedding_model, faiss_index, test_texts, test_labels, train_label_names, "Regular Test")
 
     # Holdout Tests
-    if len(holdout_texts) > 0:
+    if len(holdout_example_texts) > 0:
         print("Few-Shot Learning: Adding Holdout Classes to Index")
-        # Get some random samples for each class
-        samples_per_class = 5
-
-        # Create a mask for selected samples
-        mask = np.zeros(len(holdout_texts), dtype=bool)
-
-        # Randomly sample examples per class
-        for cls in np.unique(holdout_labels):
-            cls_indices = np.where(holdout_labels == cls)[0]
-            selected = np.random.choice(cls_indices, min(samples_per_class, len(cls_indices)), replace=False)
-            mask[selected] = True  # Mark selected indices
-        
-        # Split holdout data using the mask
-        holdout_examples_text = np.array(holdout_texts)[mask]
-        holdout_examples_labels = holdout_labels[mask]
-
-        holdout_test_texts = np.array(holdout_texts)[~mask]
-        holdout_test_labels = holdout_labels[~mask]
 
         # Update index
-        holdout_embeddings = embedding_model.encode_texts(holdout_examples_text)
+        holdout_embeddings = embedding_model.encode_texts(holdout_example_texts)
         updated_index = FaissIndex(
             np.vstack([train_embeddings, holdout_embeddings]),
-            np.hstack([train_labels, holdout_examples_labels])
+            np.hstack([train_labels, holdout_example_labels])
         )
         
         # Evaluate only on the holdout test set not used in updating the index
         evaluate_model(embedding_model, updated_index, 
-                        np.hstack([train_texts, holdout_test_texts]), 
-                        np.hstack([train_labels, holdout_test_labels]), 
+                        np.hstack([test_texts, holdout_test_texts]), 
+                        np.hstack([test_labels, holdout_test_labels]), 
                         dataset.label_names, "Holdout (Few-Shot)")
     
 if __name__ == "__main__":
