@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 sbert_finetuned/
-=======
 *__pycache__*
 .vscode/
 .DS_Store
->>>>>>> aaron_dev
