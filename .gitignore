@@ -1,4 +1,4 @@
-sbert_finetuned/
+models/
 *__pycache__*
 .vscode/
 .DS_Store
