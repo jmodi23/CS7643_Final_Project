@@ -2,25 +2,20 @@ import os
 import pandas as pd
 import numpy as np
 import torch
-from sentence_transformers import SentenceTransformer, InputExample, losses
-from sentence_transformers.evaluation import LabelAccuracyEvaluator
-from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-from transformers import get_scheduler, DistilBertTokenizer, DistilBertForSequenceClassification, Trainer, TrainingArguments
+from transformers import (DistilBertTokenizer, DistilBertForSequenceClassification,
+                          Trainer, TrainingArguments, get_scheduler)
 from datasets import Dataset
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
 # -------- SETTINGS ---------
-MODEL_NAME_SBERT = 'all-MiniLM-L6-v2'
 MODEL_NAME_DISTILBERT = 'distilbert-base-uncased'
 BATCH_SIZE = 32
 NUM_EPOCHS = 3
 LEARNING_RATE = 2e-5
-OUTPUT_PATH_SBERT = 'finetuned-sbert-model'
 OUTPUT_PATH_DISTILBERT = 'finetuned-distilbert-model'
 
-# Use GPU if available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # -------- LOAD DATA ---------
@@ -33,9 +28,8 @@ if 'main_category' in df.columns:
 if 'reviewText' in df.columns:
     df.rename(columns={'reviewText': 'text'}, inplace=True)
 
-# -------- PREPARE DATA ---------
-print("\nPreparing data for model fine-tuning...")
 df = df[df['text'].notnull() & df['label'].notnull()]
+
 le = LabelEncoder()
 df['label_id'] = le.fit_transform(df['label'])
 
@@ -43,27 +37,28 @@ train_texts, test_texts, train_labels, test_labels = train_test_split(
     df['text'].tolist(), df['label_id'].tolist(), test_size=0.2, random_state=42, stratify=df['label_id']
 )
 
-# ====================== SBERT =========================
-print("\nFine-tuning SBERT...")
-train_examples = [
-    InputExample(texts=[text, ""], label=float(label))
-    for text, label in zip(train_texts, train_labels)
-]
+# ====================== SBERT (COMMENTED OUT) =========================
+"""
+from sentence_transformers import SentenceTransformer, InputExample, losses
+from torch.utils.data import DataLoader
 
-sbert_model = SentenceTransformer(MODEL_NAME_SBERT, device=device)
-sbert_dataloader = DataLoader(train_examples, shuffle=True, batch_size=BATCH_SIZE)
-sbert_loss = losses.CosineSimilarityLoss(model=sbert_model)
-sbert_warmup_steps = int(len(sbert_dataloader) * NUM_EPOCHS * 0.1)
+print("\nFine-tuning SBERT...")
+sbert_model = SentenceTransformer('all-MiniLM-L6-v2', device=device)
+train_examples = [InputExample(texts=[text, ""], label=float(label)) for text, label in zip(train_texts, train_labels)]
+train_dataloader = DataLoader(train_examples, shuffle=True, batch_size=BATCH_SIZE)
+train_loss = losses.CosineSimilarityLoss(model=sbert_model)
+warmup_steps = int(len(train_dataloader) * NUM_EPOCHS * 0.1)
 
 sbert_model.fit(
-    train_objectives=[(sbert_dataloader, sbert_loss)],
+    train_objectives=[(train_dataloader, train_loss)],
     epochs=NUM_EPOCHS,
-    warmup_steps=sbert_warmup_steps,
-    output_path=OUTPUT_PATH_SBERT,
+    warmup_steps=warmup_steps,
+    output_path='finetuned-sbert-model',
     show_progress_bar=True
 )
 
-print("\nSBERT model fine-tuned and saved to:", OUTPUT_PATH_SBERT)
+print("\nSBERT model fine-tuned and saved.")
+"""
 
 # ====================== DISTILBERT =========================
 print("\nFine-tuning DistilBERT...")
@@ -72,16 +67,14 @@ tokenizer = DistilBertTokenizer.from_pretrained(MODEL_NAME_DISTILBERT)
 def tokenize_function(example):
     return tokenizer(example['text'], padding='max_length', truncation=True, max_length=256)
 
-distilbert_dataset = Dataset.from_dict({
-    "text": train_texts + test_texts,
-    "label": train_labels + test_labels
-})
-distilbert_dataset = distilbert_dataset.train_test_split(test_size=len(test_texts))
-distilbert_dataset = distilbert_dataset.map(tokenize_function, batched=True)
-distilbert_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', 'label'])
+dataset = Dataset.from_dict({"text": train_texts + test_texts, "label": train_labels + test_labels})
+dataset = dataset.train_test_split(test_size=len(test_texts))
+dataset = dataset.map(tokenize_function, batched=True)
+dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', 'label'])
 
-distilbert_model = DistilBertForSequenceClassification.from_pretrained(
-    MODEL_NAME_DISTILBERT, num_labels=len(le.classes_)).to(device)
+model = DistilBertForSequenceClassification.from_pretrained(
+    MODEL_NAME_DISTILBERT, num_labels=len(le.classes_)
+).to(device)
 
 training_args = TrainingArguments(
     output_dir=OUTPUT_PATH_DISTILBERT,
@@ -93,8 +86,9 @@ training_args = TrainingArguments(
     weight_decay=0.01,
     logging_dir='./logs',
     logging_steps=50,
-    save_strategy="no",
-    report_to="none"
+    save_total_limit=2,
+    report_to="none",
+    fp16=True
 )
 
 def compute_metrics(eval_pred):
@@ -102,20 +96,20 @@ def compute_metrics(eval_pred):
     preds = np.argmax(logits, axis=-1)
     precision, recall, f1, _ = precision_recall_fscore_support(labels, preds, average='weighted')
     acc = accuracy_score(labels, preds)
-    return {
-        'accuracy': acc,
-        'precision': precision,
-        'recall': recall,
-        'f1': f1
-    }
+    return {'accuracy': acc, 'precision': precision, 'recall': recall, 'f1': f1}
 
 trainer = Trainer(
-    model=distilbert_model,
+    model=model,
     args=training_args,
-    train_dataset=distilbert_dataset['train'],
-    eval_dataset=distilbert_dataset['test'],
+    train_dataset=dataset['train'],
+    eval_dataset=dataset['test'],
     compute_metrics=compute_metrics
 )
 
 trainer.train()
+
+# Save model for SentenceTransformer compatibility
+model.save_pretrained(OUTPUT_PATH_DISTILBERT)
+tokenizer.save_pretrained(OUTPUT_PATH_DISTILBERT)
+
 print("\nDistilBERT model fine-tuned and saved to:", OUTPUT_PATH_DISTILBERT)

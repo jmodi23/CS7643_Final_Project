@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from data.amazonreviews_data import AmazonReviewsDataset
 from embedding_model import EmbeddingModel
 from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, f1_score
@@ -6,7 +7,7 @@ from sklearn.utils.multiclass import unique_labels
 from collections import Counter
 import faiss
 
-np.random.seed(10)  # Set seed
+np.random.seed(10)
 
 class FaissIndex:
     def __init__(self, embeddings, labels):
@@ -63,6 +64,7 @@ def evaluate_model(embedding_model, faiss_index, test_texts, test_labels, label_
     print(f"Recall: {recall:.4f}")
     print(f"MRR: {mrr:.4f}")
     print(f"Top-{k} Acc: {topk_accuracy:.4f}")
+
     print("\nFull Classification Report:")
     labels_in_test = sorted(list(unique_labels(test_labels, preds)))
     label_names_subset = [label_names[i] for i in labels_in_test]
@@ -70,7 +72,7 @@ def evaluate_model(embedding_model, faiss_index, test_texts, test_labels, label_
 
     return preds
 
-def main(dataset, model_name):
+def main(dataset, model_name, finetuned_model_path=None):
     (train_texts, train_labels), (val_texts, val_labels), (test_texts, test_labels) = dataset.get_splits()
     (holdout_example_texts, holdout_example_labels), (holdout_test_texts, holdout_test_labels) = dataset.get_holdout_data()
 
@@ -81,7 +83,8 @@ def main(dataset, model_name):
     if len(holdout_label_names) > 0:
         print(f"Holding out classes: {', '.join(holdout_label_names)}")
 
-    embedding_model = EmbeddingModel(model_name)
+    # Load either pretrained or finetuned model
+    embedding_model = EmbeddingModel(finetuned_model_path if finetuned_model_path else model_name)
     train_embeddings = embedding_model.encode_texts(train_texts)
     faiss_index = FaissIndex(train_embeddings, train_labels)
 
@@ -111,5 +114,10 @@ if __name__ == "__main__":
 
     dataset = AmazonReviewsDataset(**amazon_params)
 
+    print("## ------------------ Untuned Models -------------")
     main(dataset, model_name='all-MiniLM-L6-v2')
     main(dataset, model_name='distilbert-base-nli-stsb-mean-tokens')
+
+    print("\n## ------------------ Fine-Tuned Models -------------")
+    main(dataset, model_name='all-MiniLM-L6-v2', finetuned_model_path='finetuned-sbert-model')
+    main(dataset, model_name='distilbert-base-nli-stsb-mean-tokens', finetuned_model_path='finetuned-distilbert-model')
