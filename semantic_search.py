@@ -1,5 +1,8 @@
 import numpy as np
 from data.newsgroups_data import NewsGroupsDataset
+
+from sklearn.utils.multiclass import unique_labels  # AT added to support mismatch in Label count for classification report
+
 from embedding_model import EmbeddingModel
 from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, f1_score
 from collections import Counter
@@ -70,7 +73,11 @@ def evaluate_model(embedding_model, faiss_index, test_texts, test_labels, label_
             # True label not in top preds
             reciprocal_ranks.append(0)
     mrr = np.mean(reciprocal_ranks)
-    
+
+
+    active_labels = unique_labels(test_labels, preds)  # AT only labels present in y_true or y_pred
+
+
     # Print results
     print(f"\n== {name} Evaluation Results ==")
     print(f"Accuracy: {accuracy:.4f}")
@@ -80,7 +87,12 @@ def evaluate_model(embedding_model, faiss_index, test_texts, test_labels, label_
     print(f"MRR: {mrr:.4f}")
     print(f"Top-{k} Acc: {topk_accuracy:.4f}")
     print("\nFull Classification Report:")
-    print(classification_report(test_labels, preds, target_names=label_names))
+
+    #print(classification_report(test_labels, preds, target_names=label_names))
+    print(classification_report(test_labels, preds, labels = active_labels,  zero_division = 0))
+
+
+
     
     return preds
 
@@ -92,9 +104,11 @@ def main(dataset, model_name):
     train_label_names = [dataset.label_names[i] for i in np.unique(train_labels)]
     holdout_label_names = [dataset.label_names[i] for i in np.unique(holdout_example_labels)]
 
+
     print(f"Trained with classes: {', '.join(train_label_names)}")
     if len(holdout_label_names) > 0:
         print(f"Holding out classes: {', '.join(holdout_label_names)}")
+
      
     embedding_model = EmbeddingModel(model_name)
     train_embeddings = embedding_model.encode_texts(train_texts)
@@ -121,12 +135,22 @@ def main(dataset, model_name):
                         dataset.label_names, name="Holdout (Few-Shot)")
     
 if __name__ == "__main__":
-    newsgroups_params = {
-        'categories': ['comp.graphics', 'rec.sport.baseball', 'sci.space', 'talk.politics.mideast'],
-        'holdout_classes': ['talk.politics.mideast']
+
+
+    #dataset = NewsGroupsDataset(**newsgroups_params)
+    from data.trec_data import TrecDataset
+
+    # Hold out specific fine-grained labels for few-shot generalization
+    trec_params = {
+        'holdout_classes': ['ENTY:currency', 'ENTY:religion', 'NUM:ord', 'NUM:temp', 'ENTY:letter', 'NUM:code', 'NUM:speed',
+'ENTY:instru', 'ENTY:symbol', 'NUM:weight', 'ENTY:plant', 'NUM:volsize', 'ABBR:abb', 'ENTY:body', 'ENTY:lang', 'LOC:mount',
+'HUM:title', 'ENTY:word','ENTY:veh', 'NUM:perc', 'NUM:dist', 'ENTY:techmeth', 'ENTY:color', 'ENTY:substance','ENTY:product',
+'HUM:desc',
+ ]  # You can change this list
     }
 
-    dataset = NewsGroupsDataset(**newsgroups_params)
+    dataset = TrecDataset(**trec_params)
+
 
     # BASE MODELS
     main(dataset, model_name='all-MiniLM-L6-v2')
