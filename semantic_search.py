@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from data.newsgroups_data import NewsGroupsDataset
-from .embedding_model import EmbeddingModel
+from .modules.embedding_model import EmbeddingModel
 from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, f1_score
 from collections import Counter
 import faiss
