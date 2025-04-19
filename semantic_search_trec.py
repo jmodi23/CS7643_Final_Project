@@ -4,7 +4,14 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from data.newsgroups_data import NewsGroupsDataset
+<<<<<<< HEAD:semantic_search.py
 from .modules.embedding_model import EmbeddingModel
+=======
+
+from sklearn.utils.multiclass import unique_labels  # AT added to support mismatch in Label count for classification report
+
+from embedding_model import EmbeddingModel
+>>>>>>> atipingiri_dev:semantic_search_trec.py
 from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, f1_score
 from collections import Counter
 import faiss
@@ -71,6 +78,7 @@ def evaluate_model(embedding_model, faiss_index, test_texts, test_labels, label_
         except ValueError:
             reciprocal_ranks.append(0)
     mrr = np.mean(reciprocal_ranks)
+<<<<<<< HEAD:semantic_search.py
     
     # Print KNN evaluation results
     print(f"\n== {name} Evaluation Results (KNN) ==")
@@ -79,9 +87,28 @@ def evaluate_model(embedding_model, faiss_index, test_texts, test_labels, label_
     print(f"Precision:   {precision:.4f}")
     print(f"Recall:      {recall:.4f}")
     print(f"MRR:         {mrr:.4f}")
+=======
+
+
+    active_labels = unique_labels(test_labels, preds)  # AT only labels present in y_true or y_pred
+
+
+    # Print results
+    print(f"\n== {name} Evaluation Results ==")
+    print(f"Accuracy: {accuracy:.4f}")
+    print(f"F1-Score: {f1:.4f}")
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall: {recall:.4f}")
+    print(f"MRR: {mrr:.4f}")
+>>>>>>> atipingiri_dev:semantic_search_trec.py
     print(f"Top-{k} Acc: {topk_accuracy:.4f}")
     print("\nFull Classification Report:")
-    print(classification_report(test_labels, preds, target_names=label_names))
+
+    #print(classification_report(test_labels, preds, target_names=label_names))
+    print(classification_report(test_labels, preds, labels = active_labels,  zero_division = 0))
+
+
+
     
     return preds
 
@@ -134,11 +161,21 @@ def run_text_classification_pipeline(dataset, model_name):
     # Get label names for KNN evaluation as before
     train_label_names = [dataset.label_names[i] for i in np.unique(train_labels)]
     holdout_label_names = [dataset.label_names[i] for i in np.unique(holdout_example_labels)]
+<<<<<<< HEAD:semantic_search.py
     
     print(f"Trained with classes: {', '.join(train_label_names)}")
     if len(holdout_label_names) > 0:
         print(f"Holding out classes: {', '.join(holdout_label_names)}")
     
+=======
+
+
+    print(f"Trained with classes: {', '.join(train_label_names)}")
+    if len(holdout_label_names) > 0:
+        print(f"Holding out classes: {', '.join(holdout_label_names)}")
+
+     
+>>>>>>> atipingiri_dev:semantic_search_trec.py
     embedding_model = EmbeddingModel(model_name)
     train_embeddings = embedding_model.encode_texts(train_texts)
     faiss_index = FaissIndex(train_embeddings, train_labels)
@@ -196,6 +233,7 @@ def run_text_classification_pipeline(dataset, model_name):
 
 # np.random.seed(10)  # Set seed
     
+<<<<<<< HEAD:semantic_search.py
 # class FaissIndex:
 #     # FAISS index for similarity search and classification
 #     def __init__(self, embeddings, labels):
@@ -221,6 +259,25 @@ def run_text_classification_pipeline(dataset, model_name):
 #         counts = Counter(neighbor_labels)
 #         # Sort by count, return k most common
 #         return [label for label, _ in counts.most_common(k)]
+=======
+if __name__ == "__main__":
+
+
+    #dataset = NewsGroupsDataset(**newsgroups_params)
+    from data.trec_data import TrecDataset
+
+    # Hold out specific fine-grained labels for few-shot generalization
+    trec_params = {
+        'holdout_classes': ['ENTY:currency', 'ENTY:religion', 'NUM:ord', 'NUM:temp', 'ENTY:letter', 'NUM:code', 'NUM:speed',
+'ENTY:instru', 'ENTY:symbol', 'NUM:weight', 'ENTY:plant', 'NUM:volsize', 'ABBR:abb', 'ENTY:body', 'ENTY:lang', 'LOC:mount',
+'HUM:title', 'ENTY:word','ENTY:veh', 'NUM:perc', 'NUM:dist', 'ENTY:techmeth', 'ENTY:color', 'ENTY:substance','ENTY:product',
+'HUM:desc',
+ ]  # You can change this list
+    }
+
+    dataset = TrecDataset(**trec_params)
+
+>>>>>>> atipingiri_dev:semantic_search_trec.py
 
 # def evaluate_model(embedding_model, faiss_index, test_texts, test_labels, label_names, k=5, name="Test"):
 #     # Evaluate the classification model on test data
