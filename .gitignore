@@ -1,3 +1,98 @@
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+# =================================
+# Python
+# =================================
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# =================================
+# Virtual Environments
+# =================================
+cs7643_fp/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# =================================
+# VS Code Settings
+# =================================
+.vscode/
+.history/
+
+# =================================
+# Jupyter Notebook Checkpoints (if using notebooks)
+# =================================
+.ipynb_checkpoints/
+
+# =================================
+# OS Files
+# =================================
+.DS_Store
+Thumbs.db
+
+# =================================
+# Logs and temp files
+# =================================
+*.log
+*.tmp
+*.bak
+*.swp
+
+# =================================
+# Python Environments (if using pipenv or poetry)
+# =================================
+Pipfile.lock
+poetry.lock
+
+# =================================
+# dotenv environment files
+# =================================
+.env
+.env.*
+
+# =================================
+# FAISS index files (if you create/save them)
+# =================================
+*.index
+
+# =================================
+# Data and Others
+# =================================
+amazon_reviews_data/
+
+
+### =================================
+# Fine-Tuned Model Outputs
+### =================================
+finetuned-distilbert-model/
+finetuned-sbert-model/
+fp-fine-tuned-overall.png
+
+
+# =================================
+amazon_dataset_eda.ipynb
+=======
 *__pycache__*
 .vscode/
 .DS_Store
+>>>>>>> e3b55f0fc205dc5933ddcd152611650da658997c
+=======
+models/
+*__pycache__*
+.vscode/
+.DS_Store
+>>>>>>> origin/josh-dev
+=======
+models/
+*__pycache__*
+.vscode/
+.DS_Store
+>>>>>>> origin/josh-dev

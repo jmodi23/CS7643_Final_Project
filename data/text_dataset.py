@@ -9,6 +9,10 @@ class TextDataset:
 
         # Initialize the dataset and split it into training, validation, and test sets
         self.texts, self.labels, self.label_names = self.load_data()
+<<<<<<< HEAD
+        self.labels = np.array(self.labels)
+=======
+>>>>>>> e3b55f0fc205dc5933ddcd152611650da658997c
         self.holdout_classes = holdout_classes if holdout_classes else []
         self.holdout_class_indices = [self.label_names.index(cls) for cls in self.holdout_classes if cls in self.label_names]
         
