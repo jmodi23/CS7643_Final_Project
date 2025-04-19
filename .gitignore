@@ -1,5 +1,6 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 # =================================
 # Python
 # =================================
@@ -83,6 +84,12 @@ amazon_dataset_eda.ipynb
 .vscode/
 .DS_Store
 >>>>>>> e3b55f0fc205dc5933ddcd152611650da658997c
+=======
+models/
+*__pycache__*
+.vscode/
+.DS_Store
+>>>>>>> origin/josh-dev
 =======
 models/
 *__pycache__*
