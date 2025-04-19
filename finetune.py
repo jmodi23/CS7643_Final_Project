@@ -11,7 +11,7 @@ from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
 # -------- SETTINGS ---------
 MODEL_NAME_DISTILBERT = 'distilbert-base-uncased'
-BATCH_SIZE = 32
+BATCH_SIZE = 32 
 NUM_EPOCHS = 3
 LEARNING_RATE = 2e-5
 OUTPUT_PATH_DISTILBERT = 'finetuned-distilbert-model'
