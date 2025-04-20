@@ -80,3 +80,5 @@ models/
 *__pycache__*
 .vscode/
 .DS_Store
+TREC_Dataset/
+images/
