@@ -112,7 +112,7 @@ def main(dataset, model_name):
 if __name__ == "__main__":
 
     datasets = ['amazon', 'newsgroups', 'trec']
-    dataset_chosen = datasets[2]
+    dataset_chosen = datasets[0]
 
     print(f"Evaluating for dataset {dataset_chosen}")
     if dataset_chosen == datasets[0]:
@@ -149,8 +149,9 @@ if __name__ == "__main__":
         raise "Dataset not chosen!"
 
     print("## ------------------ Untuned Models -------------")
-    main(dataset, model_name='all-MiniLM-L6-v2')
-    main(dataset, model_name='distilbert-base-nli-stsb-mean-tokens')
+    # main(dataset, model_name='all-MiniLM-L6-v2')
+    main(dataset, model_name='distilbert-base-uncased') # Shockingly this works even though DistilBERT is not from Sentence Transformers
+    # main(dataset, model_name='distilbert-base-nli-stsb-mean-tokens')
 
     print("\n## ------------------ Fine-Tuned Models -------------")
     # Replace model_name with the path to the finetuned models
