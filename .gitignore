@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 # =================================
 # Python
 # =================================
@@ -79,20 +76,7 @@ fp-fine-tuned-overall.png
 
 # =================================
 amazon_dataset_eda.ipynb
-=======
-*__pycache__*
-.vscode/
-.DS_Store
->>>>>>> e3b55f0fc205dc5933ddcd152611650da658997c
-=======
 models/
 *__pycache__*
 .vscode/
 .DS_Store
->>>>>>> origin/josh-dev
-=======
-models/
-*__pycache__*
-.vscode/
-.DS_Store
->>>>>>> origin/josh-dev
