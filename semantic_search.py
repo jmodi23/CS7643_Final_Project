@@ -149,8 +149,8 @@ if __name__ == "__main__":
         raise "Dataset not chosen!"
 
     print("## ------------------ Untuned Models -------------")
-    # main(dataset, model_name='all-MiniLM-L6-v2')
-    main(dataset, model_name='distilbert-base-uncased') # Shockingly this works even though DistilBERT is not from Sentence Transformers
+    main(dataset, model_name='all-MiniLM-L6-v2')
+    main(dataset, model_name='distilbert-base-uncased') # Shockingly this works even though DistilBERT is not from Sentence Transformers. Note that it is doing mean pooling and not directly using the CLS token.
     # main(dataset, model_name='distilbert-base-nli-stsb-mean-tokens')
 
     print("\n## ------------------ Fine-Tuned Models -------------")
