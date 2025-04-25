@@ -9,6 +9,7 @@ We investigate both **fine-tuning classification heads** and **semantic similari
 ---
 
 ## Project Structure
+```bash
 CS7643_Final_Project/
 ├── 20newgroups/                 # Fine-tuning scripts and experiments for 20 Newsgroups
 ├── EDA/                         # Exploratory Data Analysis notebooks
@@ -26,7 +27,7 @@ CS7643_Final_Project/
 ├── evaluatedmodels.py             # Scripts to load and evaluate fine-tuned models
 ├── requirements.txt               # Python dependencies
 └── README.md                      # Project README
-
+```
 
 ---
 
@@ -52,19 +53,19 @@ Each dataset was adapted for experiments involving both full supervision and few
 ## How to Run
 
 ### 1. Clone the repository
-```
+```bash
 git clone https://github.com/jmodi23/CS7643_Final_Project.git
 cd CS7643_Final_Project
 ```
 
 ### 2. Install Dependencies
-``` 
+```bash
 pip install -r requirements.txt
 ```
 
 ### 3. Fine-Tune a Model
 Example (DistilBERT fine-tuning):
-```
+```bash
 python finetune.py --model distilbert-base-uncased --dataset amazon
 ```
 Example (SBERT fine-tuning):
