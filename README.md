@@ -90,5 +90,5 @@ All outputs will be saved in the images/ directory.
 ## Team Members
 * Jainil Modi — Amazon Reviews dataset, semantic search experiments, fine-tuning analysis
 * Aaron Rodrigues — Project planning, reusable training modules, evaluation pipelines
-* Joshua Belot — Newsgroups fine-tuning experiments + semantic search experiments
+* Joshua Belot — 20Newsgroups fine-tuning experiments + semantic search experiments
 * Arun K Tipingiri — TREC fine-tuning experiments + semantic search experiments
